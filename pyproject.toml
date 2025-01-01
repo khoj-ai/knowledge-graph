@@ -1,0 +1,16 @@
+[project]
+name = "graphrag-poc"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "google-generativeai>=0.8.3",
+    "networkx-stubs>=0.0.1",
+    "networkx>=3.4.2",
+    "python-dotenv>=1.0.1",
+    "graspologic>=3.4.1",
+    "types-tqdm>=4.67.0.20241221",
+    "future>=1.0.0",
+    "pynndescent>=0.5.13",
+]
