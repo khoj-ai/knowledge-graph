@@ -15,6 +15,10 @@ wheels/
 # Datasets
 data/
 
+# Data storage
+chroma*
+db/
+
 # Build files
 graphs/
 .aider*

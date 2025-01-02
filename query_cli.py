@@ -13,6 +13,8 @@ from typing_extensions import Annotated
 console = Console()
 app = typer.Typer()
 
+MAX_DOCUMENT_LENGTH = 1000
+
 def get_chroma_client():
     """Get ChromaDB client connection"""
     return chromadb.HttpClient(host='localhost', port=8000)
@@ -32,7 +34,7 @@ def format_collection_results(collection_name: str, results, query: str) -> Tabl
     ):
         table.add_row(
             str(id),
-            document[:200] + "..." if len(document) > 200 else document,
+            document,
             f"{distance:.4f}"
         )
     
@@ -47,7 +49,7 @@ def search_collections(query: str, n_results: int = 3):
         results_found = False
         
         for collection in collections:
-            coll = client.get_collection(collection.name)
+            coll = client.get_collection(collection)
             results = coll.query(
                 query_texts=[query],
                 n_results=n_results
@@ -55,7 +57,7 @@ def search_collections(query: str, n_results: int = 3):
             
             if results['ids'][0]:
                 results_found = True
-                table = format_collection_results(collection.name, results, query)
+                table = format_collection_results(collection, results, query)
                 console.print(table)
                 console.print()
         

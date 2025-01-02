@@ -13,4 +13,7 @@ dependencies = [
     "types-tqdm>=4.67.0.20241221",
     "future>=1.0.0",
     "pynndescent>=0.5.13",
+    "chromadb>=0.6.0",
+    "typer>=0.15.1",
+    "typing-extensions>=4.12.2",
 ]

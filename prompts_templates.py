@@ -59,7 +59,7 @@ You are a data scientist working on a project that involves analyzing a graph da
 
 COMMUNITY_SUMMARIZATION_PROMPT = """
 -Goal-
-You are given a collection of nodes that are part of a community in a graph. Your task is to summarize the community based on the nodes' attributes and descriptions.
+You are given a collection of nodes that are part of a community in a graph. Your task is to summarize the community based on the nodes' attributes and descriptions. Be detailed and process in your summary. Include any patterns, commonalities, or relationships among the nodes in the community. You will receive a list of descriptions for each node in the community. You must rely only on this information to summarize the community.
 
 --Real Data--
 ######################

@@ -3,10 +3,6 @@ import html
 from typing import Any, Dict, List, Tuple, cast
 from graspologic.partition import hierarchical_leiden, HierarchicalClusters
 
-def create_summary(relevant_nodes: List[nx.classes.reportviews.NodeView]) -> str:
-    # Given a list of relevant nodes, create a summary of the nodes
-    return ""
-
 def run_leiden(
     G: nx.Graph, 
     max_cluster_size = 10,

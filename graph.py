@@ -10,17 +10,18 @@ This file will contain a simple version of Graph RAG, which can be used to index
 """
 
 import os
-from typing import Dict, List
+from typing import Dict, List, Union
 import json
 import pickle
 import collections
 from prompts_templates import GRAPH_EXTRACTION_JSON_PROMPT, GRAPH_EXTRACTION_SYSTEM_PROMPT, NODE_SUMMARIZATION_SYSTEM_PROMPT, NODE_SUMMARIZATION_PROMPT, COMMUNITY_SUMMARIZATION_SYSTEM_PROMPT, COMMUNITY_SUMMARIZATION_PROMPT
 from utils import clean_json
-from operations import create_summary, run_leiden
+from operations import run_leiden
 from dotenv import load_dotenv
 import logging
 from tqdm import tqdm
 import time
+import chromadb
 
 import networkx as nx
 
@@ -78,6 +79,7 @@ class GraphRAG:
                 HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
             }
         )
+        self.chroma_client = chromadb.HttpClient(host='localhost', port=8000)
 
     def read_documents(self, directory) -> Dict[str, str]:
         # Read documents from the specified directory
@@ -189,7 +191,9 @@ class GraphRAG:
             
             response = chat_session.send_message(formatted_message)
             
-            summary_graph.add_node(node, summary=response.text if response.text else "No summary provided")
+            summary_details["summary"] = response.text if response.text else "No summary provided"
+            
+            summary_graph.add_node(node, summary=summary_details)
             
         pickle.dump(summary_graph, open(node_summary_graph_file_path, "wb"))
         
@@ -244,10 +248,15 @@ class GraphRAG:
 
         # Create a summary for each cluster
         for cluster_id, node_list in tqdm(cluster_to_nodes.items(), desc="Generating community summaries"):
-            relevant_nodes: List[nx.classes.reportviews.NodeView] = list()
+            # relevant_nodes: List[nx.classes.reportviews.NodeView] = list()
+            relevant_nodes: List[Dict[str, str]] = list()
             for n in node_list:
                 if n in element_summaries.nodes:
-                    relevant_nodes.append(element_summaries.nodes[n])
+                    node = dict()
+                    node["name"] = n
+                    node["description"] = element_summaries.nodes[n].get("summary")
+                    
+                    relevant_nodes.append(node)
                     
             chat_session = self.community_summarizer_model.start_chat()
             formatted_message = COMMUNITY_SUMMARIZATION_PROMPT.format(
@@ -261,9 +270,31 @@ class GraphRAG:
         for parent_cluster_id, child_cluster_id in graph_communities.edges():
             summary_graph.add_edge(parent_cluster_id, child_cluster_id)
             
-        # pickle.dump(summary_graph, open(summary_graph_file_path, "wb"))
+        pickle.dump(summary_graph, open(summary_graph_file_path, "wb"))
 
         return summary_graph
+    
+    def store_graph_in_db(self, graph: Union[nx.DiGraph, nx.Graph], collection_name: str):
+        collection = self.chroma_client.get_or_create_collection(collection_name)
+        
+        for node, data in graph.nodes(data=True):
+            data_str = " ".join([f"{k}: {v}" for k, v in data.items()])
+            data_str += f"node: {node}"
+            collection.upsert(
+                documents=[data_str],
+                ids=[str(node)]
+            )
+            
+    def store_docs_in_db(self, documents: Dict[str, List[str]], collection_name: str):
+        collection = self.chroma_client.get_or_create_collection(collection_name)
+        
+        for doc_name, doc_chunks in documents.items():
+            for i, doc_chunk in enumerate(doc_chunks):
+                doc_text = f"{doc_name} chunk {i}: {doc_chunk}"
+                collection.upsert(
+                    documents=[doc_text],
+                    ids=[f"{doc_name}_chunk_{i}"]
+                )
 
 if __name__ == "__main__":
     # Example usage of the GraphRAG class
@@ -276,3 +307,11 @@ if __name__ == "__main__":
     
     graph_communities = graph_rag.graph_communities(element_instances)
     community_summaries = graph_rag.community_summaries(graph_communities, element_summaries)
+    
+    # Store the graph in a database
+    graph_rag.store_graph_in_db(element_instances, "element_instances")
+    graph_rag.store_graph_in_db(element_summaries, "element_summaries")
+    graph_rag.store_graph_in_db(graph_communities, "graph_communities")
+    graph_rag.store_graph_in_db(community_summaries, "community_summaries")
+    graph_rag.store_docs_in_db(text_chunks, "source_documents")
+    
