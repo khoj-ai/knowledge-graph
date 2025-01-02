@@ -164,7 +164,7 @@ class GraphRAG:
             logger.info("No pickled graph found. Generating a new graph.")
             pass
         
-        for node, data in element_instances.nodes(data=True):
+        for node, data in tqdm(element_instances.nodes(data=True), desc="Generating node summaries"):
             all_edges = list(element_instances.edges(node, data=True))
             summary_details = {
                 "name": node,
@@ -243,7 +243,7 @@ class GraphRAG:
                 cluster_to_nodes[cluster_id].append(node)
 
         # Create a summary for each cluster
-        for cluster_id, node_list in cluster_to_nodes.items():
+        for cluster_id, node_list in tqdm(cluster_to_nodes.items(), desc="Generating community summaries"):
             relevant_nodes: List[nx.classes.reportviews.NodeView] = list()
             for n in node_list:
                 if n in element_summaries.nodes:
