@@ -14,7 +14,7 @@ from typing import Dict, List
 import json
 import pickle
 import collections
-from prompts_templates import GRAPH_EXTRACTION_JSON_PROMPT, GRAPH_EXTRACTION_SYSTEM_PROMPT
+from prompts_templates import GRAPH_EXTRACTION_JSON_PROMPT, GRAPH_EXTRACTION_SYSTEM_PROMPT, NODE_SUMMARIZATION_SYSTEM_PROMPT, NODE_SUMMARIZATION_PROMPT, COMMUNITY_SUMMARIZATION_SYSTEM_PROMPT, COMMUNITY_SUMMARIZATION_PROMPT
 from utils import clean_json
 from operations import create_summary, run_leiden
 from dotenv import load_dotenv
@@ -49,6 +49,28 @@ class GraphRAG:
         self.entity_extractor_model = genai.GenerativeModel(
             "gemini-1.5-flash-002",
             system_instruction=GRAPH_EXTRACTION_SYSTEM_PROMPT,
+            safety_settings={
+                HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+                HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+                HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
+                HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
+            }
+        )
+        
+        self.summarizer_model = genai.GenerativeModel(
+            "gemini-1.5-flash-002",
+            system_instruction=NODE_SUMMARIZATION_SYSTEM_PROMPT,
+            safety_settings={
+                HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
+                HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
+                HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_NONE,
+                HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_NONE,
+            }
+        )
+        
+        self.community_summarizer_model = genai.GenerativeModel(
+            "gemini-1.5-flash-002",
+            system_instruction=COMMUNITY_SUMMARIZATION_SYSTEM_PROMPT,
             safety_settings={
                 HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_NONE,
                 HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_NONE,
@@ -132,6 +154,16 @@ class GraphRAG:
     def element_summaries(self, element_instances: nx.Graph) -> nx.Graph:
         # Create a summary of each node
         summary_graph = nx.DiGraph()
+        
+        node_summary_graph_file_path = "graphs/node_summaries.gpickle"
+        try:
+            if os.path.exists(node_summary_graph_file_path):
+                pickled_graph = pickle.load(open(node_summary_graph_file_path, "rb"))
+                return pickled_graph
+        except:
+            logger.info("No pickled graph found. Generating a new graph.")
+            pass
+        
         for node, data in element_instances.nodes(data=True):
             all_edges = list(element_instances.edges(node, data=True))
             summary_details = {
@@ -147,7 +179,20 @@ class GraphRAG:
                     for edge in all_edges
                 ]
             }
-            summary_graph.add_node(node, summary=summary_details)
+            chat_session = self.summarizer_model.start_chat()
+            formatted_message = NODE_SUMMARIZATION_PROMPT.format(
+                node_name=summary_details["name"],
+                node_type=summary_details["type"],
+                node_description=summary_details["description"],
+                relationships=summary_details["edges"]
+            )
+            
+            response = chat_session.send_message(formatted_message)
+            
+            summary_graph.add_node(node, summary=response.text if response.text else "No summary provided")
+            
+        pickle.dump(summary_graph, open(node_summary_graph_file_path, "wb"))
+        
         return summary_graph
 
     def graph_communities(self, element_summaries: nx.Graph) -> nx.DiGraph:
@@ -204,7 +249,12 @@ class GraphRAG:
                 if n in element_summaries.nodes:
                     relevant_nodes.append(element_summaries.nodes[n])
                     
-            summary = create_summary(relevant_nodes)
+            chat_session = self.community_summarizer_model.start_chat()
+            formatted_message = COMMUNITY_SUMMARIZATION_PROMPT.format(
+                community_nodes=relevant_nodes
+            )
+            response = chat_session.send_message(formatted_message)
+            summary = response.text if response.text else "No summary provided"
             summary_graph.add_node(cluster_id, summary=summary)
 
         # Replicate edges indicating parent-child relationships between clusters

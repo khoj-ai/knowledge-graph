@@ -33,3 +33,37 @@ entity_types: {entity_types}
 text: {input_text}
 ######################
 output:"""
+
+NODE_SUMMARIZATION_SYSTEM_PROMPT = """
+You are a data scientist working on a project that involves analyzing a graph data structure. Your goal is to summarize the nodes in the graph based on their attributes and relationships.
+"""
+
+NODE_SUMMARIZATION_PROMPT = """
+-Goal-
+You are give information of a node, its name, a description, and the relationships it has with other nodes. Your task is to summarize the node based on this information in a few sentences or bullet points.
+
+--Real Data--
+######################
+node_name: {node_name}
+node_type: {node_type}
+node_description: {node_description}
+relationships: {relationships}
+######################
+output:
+"""
+
+
+COMMUNITY_SUMMARIZATION_SYSTEM_PROMPT = """
+You are a data scientist working on a project that involves analyzing a graph data structure. Your goal is to summarize the communities in the graph based on their attributes and relationships.
+"""
+
+COMMUNITY_SUMMARIZATION_PROMPT = """
+-Goal-
+You are given a collection of nodes that are part of a community in a graph. Your task is to summarize the community based on the nodes' attributes and descriptions.
+
+--Real Data--
+######################
+community_nodes: {community_nodes}
+######################
+output:
+"""
