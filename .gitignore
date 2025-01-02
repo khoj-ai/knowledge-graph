@@ -17,3 +17,4 @@ data/
 
 # Build files
 graphs/
+.aider*
