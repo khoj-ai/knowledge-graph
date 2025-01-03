@@ -1,9 +1,7 @@
-import streamlit as st
-from pyvis.network import Network
+import streamlit as st # type: ignore
+from pyvis.network import Network # type: ignore
 import networkx as nx
 import tempfile
-from pathlib import Path
-import json
 from graph import GraphRAG
 
 def create_interactive_graph(G):
