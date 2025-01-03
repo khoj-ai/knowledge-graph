@@ -67,3 +67,47 @@ community_nodes: {community_nodes}
 ######################
 output:
 """
+
+QUERY_COMPOSER_SYSTEM_PROMPT = """
+You are a data scientist working on a project that involves querying a graph data structure. Your goal is to compose queries that will retrieve specific information from the graph.
+"""
+
+GRAPH_QUERY_TRANSFORM_PROMPT = """
+-Goal-
+Given a query and a list of entity types, transform the query into a search query that is specific to the entities in the graph.
+
+-Steps-
+
+1. Examine all the entity options and the query provided. Decide which of the entities is most relevant to answering the question, and construct a search query that will retrieve information about that entity in order to answer the input query. Queries should be questions or statements that can be used to retrieve information about the entities in the graph.
+2. Return output in English as a single list of all search queries gathered in step 1 that can assist in answering the input query. It should be in the following format:
+
+{{"queries": [<search_query1>, <search_query2>, ...]}}
+
+--Real Data--
+######################
+entities: {entities}
+input_query: {input_text}
+######################
+output:
+"""
+
+FINAL_RESPONSE_COMPOSER_SYSTEM_PROMPT = """
+You are an astute analyst who is tasked with extracting relevant information from a set of documents, given a query. Your goal is to generate a response that answers the query using the information extracted from the documents.
+"""
+
+FINAL_RESPONSE_COMPOSER_PROMPT = """
+-Goal-
+Given a set of queries and a list of relevant documents, generate a response that answers the query using the information extracted from the documents. You can include citations or references to the relevant documents in your response, denoted by the document ID.
+
+-Steps-
+
+1. Analyze the queries and the relevant documents provided. Identify the key information in the documents that can help answer the query.
+2. Compose a response that directly addresses the query using the information extracted from the documents. You can paraphrase or summarize the information, but ensure that the response is clear and relevant to the query.
+
+--Real Data--
+######################
+input_query: {input_text}
+relevant_docs: {relevant_docs}
+######################
+output:
+"""
