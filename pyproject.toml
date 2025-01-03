@@ -16,4 +16,6 @@ dependencies = [
     "chromadb>=0.6.0",
     "typer>=0.15.1",
     "typing-extensions>=4.12.2",
+    "streamlit>=1.41.1",
+    "pyvis>=0.3.2",
 ]

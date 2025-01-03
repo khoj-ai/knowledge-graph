@@ -34,7 +34,7 @@ def format_collection_results(collection_name: str, results, query: str) -> Tabl
     ):
         table.add_row(
             str(id),
-            document,
+            document if len(document) < MAX_DOCUMENT_LENGTH else f"{document[:MAX_DOCUMENT_LENGTH]}...",
             f"{distance:.4f}"
         )
     
