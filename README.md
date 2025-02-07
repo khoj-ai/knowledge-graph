@@ -21,6 +21,11 @@ uv run pip install
 
 3. Run the following command to generate the knowledge graph:
 
+First, start the Chroma server:
+```bash
+chroma run --path db
+```
+
 ```bash
 python3 graph.py
 ```
