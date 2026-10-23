@@ -1,5 +1,5 @@
 GRAPH_EXTRACTION_SYSTEM_PROMPT = """
-You are a trained export in extracting entities and relationships from text documents. Your goal is to identify all entities and relationships from the text provided.
+You are a trained expert in extracting entities and relationships from text documents. Your goal is to identify all entities and relationships from the text provided.
 """
 
 GRAPH_EXTRACTION_JSON_PROMPT = """
@@ -40,7 +40,7 @@ You are a data scientist working on a project that involves analyzing a graph da
 
 NODE_SUMMARIZATION_PROMPT = """
 -Goal-
-You are give information of a node, its name, a description, and the relationships it has with other nodes. Your task is to summarize the node based on this information in a few sentences or bullet points.
+You are given information of a node, its name, a description, and the relationships it has with other nodes. Your task is to summarize the node based on this information in a few sentences or bullet points.
 
 --Real Data--
 ######################
